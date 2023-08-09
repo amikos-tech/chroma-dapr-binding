@@ -46,7 +46,13 @@ type ChromaBindingComponent struct {
 	logger logger.Logger
 }
 
-func (c *ChromaBindingComponent) Init(meta bindings.Metadata) (err error) {
+func NewChroma(logger logger.Logger) bindings.OutputBinding {
+	return &ChromaBindingComponent{
+		logger: logger,
+	}
+}
+
+func (c *ChromaBindingComponent) Init(ctx context.Context, meta bindings.Metadata) (err error) {
 	// Called to initialize the component with its configured metadata...
 	c.meta = chromaMetadata{
 		Url:                      meta.Properties[urlProperty],
@@ -78,6 +84,14 @@ func (c *ChromaBindingComponent) Init(meta bindings.Metadata) (err error) {
 	c.logger = logger.NewLogger("dapr.binding.chroma")
 	c.client = chroma.NewClient(c.meta.Url)
 	return nil
+}
+
+func (c *ChromaBindingComponent) GetComponentMetadata() map[string]string {
+	return map[string]string{
+		"url":                      c.meta.Url,
+		"operationTimeout":         c.meta.OperationTimeout.String(),
+		"defaultEmbeddingFunction": c.meta.DefaultEmbeddingFunction,
+	}
 }
 
 type createCollectionRequest struct {
@@ -122,6 +136,7 @@ func (c *ChromaBindingComponent) getEmbeddingFunction(embeddingFunctionString st
 }
 
 func (c *ChromaBindingComponent) getDistanceFunction(distanceFunctionString string) (chroma.DistanceFunction, error) {
+
 	switch distanceFunctionString {
 	case string(chroma.L2):
 		return chroma.L2, nil
@@ -151,6 +166,7 @@ func (c *ChromaBindingComponent) Invoke(ctx context.Context, req *bindings.Invok
 		resp.Data = []byte(strconv.FormatBool(r))
 
 	case version:
+		c.logger.Debugf("getting version")
 		v, err := c.client.Version()
 		if err != nil {
 			return nil, err
@@ -158,6 +174,7 @@ func (c *ChromaBindingComponent) Invoke(ctx context.Context, req *bindings.Invok
 		resp.Data = []byte(v)
 
 	case heartbeat:
+		c.logger.Debugf("getting version")
 		h, err := c.client.Heartbeat()
 		if err != nil {
 			return nil, err
@@ -178,14 +195,15 @@ func (c *ChromaBindingComponent) Invoke(ctx context.Context, req *bindings.Invok
 		if err != nil {
 			return nil, err
 		}
-		c.logger.Debugf("createCollection: %v", createCollectionReq)
 		var embeddingFunction chroma.EmbeddingFunction
+		c.logger.Infof("createCollection: %v", createCollectionReq)
 		embeddingFunction, err = c.getEmbeddingFunction(createCollectionReq.EmbeddingFunction)
 		if err != nil {
 			return nil, err
 		}
-		var distanceFunction chroma.DistanceFunction
-		distanceFunction, err = c.getDistanceFunction(createCollectionReq.DistanceFunction)
+
+		c.logger.Infof("distanceFunctionString: %s", createCollectionReq.DistanceFunction)
+		distanceFunction, err := c.getDistanceFunction(createCollectionReq.DistanceFunction)
 		if err != nil {
 			return nil, err
 		}
@@ -236,6 +254,15 @@ func (c *ChromaBindingComponent) Invoke(ctx context.Context, req *bindings.Invok
 		if err != nil {
 			return nil, err
 		}
+		collection, err := c.client.GetCollection(getCollectionReq.Name, nil)
+		if err != nil {
+			return nil, err
+		}
+		d, err := json.Marshal(collection)
+		if err != nil {
+			return nil, err
+		}
+		resp.Data = d
 	default:
 		return nil, fmt.Errorf(
 			"invalid operation type: %s. Expected %v",

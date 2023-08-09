@@ -1,0 +1,66 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+#    - name: golangci-lint
+#      uses: golangci/golangci-lint-action@v2.5.2
+#      with:
+#        version: '1.20'
+    - name: Build
+      run: go build -v ./...
+    - name: Install Helm
+      uses: azure/setup-helm@v1
+      with:
+        version: v3.4.0
+
+    - name: start minikube
+      id: minikube
+      uses: medyagh/setup-minikube@latest
+      with:
+        kubernetes-version: 1.27.3
+    - name: Add helm repo
+      run: |
+        set -e
+        helm repo add chromadb https://amikos-tech.github.io/chromadb-chart/
+        helm repo update
+    - name: Install chromadb
+      run: |
+        set -e
+        helm install chromadb chromadb/chromadb --set chromadb.allowReset=true,chromadb.apiVersion=${{ matrix.chroma-version }}
+    - name: Wait for deployment to be ready
+      id: wait-and-set
+      run: |
+        set -e
+        kubectl wait \
+        --for=condition=ready pod \
+        --selector=app.kubernetes.io/name=chromadb \
+        --timeout=120s
+        echo "chroma-url=$(minikube service chromadb --url)" >> $GITHUB_OUTPUT
+    - name: Hearthbeat
+      run: |
+        set -e
+        kubectl get svc -A
+        curl $(minikube service chromadb --url)/api/v1
+    - name: Test
+      run: go test -v ./... -cover
+      env:
+        OPENAI_API_KEY:  ${{ secrets.OPENAI_API_KEY }}
+        CHROMA_URL: ${{steps.wait-and-set.outputs.chroma-url}}

@@ -31,7 +31,7 @@ metadata:
   - name: url
     required: true
     description: |
-      The chroam server url
+      The chroma server url
     example: "http://localhost:8000"
     type: string
   - name: openAIApiKey
