@@ -8,6 +8,7 @@ import (
 	"github.com/dapr/kit/logger"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 )
@@ -73,6 +74,26 @@ func TestChromaIntegration(t *testing.T) {
 	})
 
 	t.Run("Invoke list collections", func(t *testing.T) {
+		resetReq := &bindings.InvokeRequest{
+			Operation: reset,
+		}
+		resReset, errReset := b.Invoke(ctx, resetReq)
+		require.Nil(t, errReset)
+		require.NotNil(t, resReset)
+		createReq := &bindings.InvokeRequest{
+			Operation: createCollection,
+			Data: []byte(fmt.Sprintf(`{
+				"name": "%s",
+				"embeddingFunction": "openai",
+				"metadata": {
+					"type": "col"
+				},	
+				"distanceFunction": "l2"
+			}`, testCollection)),
+		}
+		resCreate, createErr := b.Invoke(ctx, createReq)
+		require.Nil(t, createErr)
+		require.NotNil(t, resCreate)
 		req := &bindings.InvokeRequest{
 			Operation: listCollections,
 		}
@@ -81,6 +102,12 @@ func TestChromaIntegration(t *testing.T) {
 	})
 
 	t.Run("Invoke create collection", func(t *testing.T) {
+		resetReq := &bindings.InvokeRequest{
+			Operation: reset,
+		}
+		resReset, errReset := b.Invoke(ctx, resetReq)
+		require.Nil(t, errReset)
+		require.NotNil(t, resReset)
 		req := &bindings.InvokeRequest{
 			Operation: createCollection,
 			Data: []byte(fmt.Sprintf(`{
@@ -97,6 +124,26 @@ func TestChromaIntegration(t *testing.T) {
 	})
 
 	t.Run("Invoke delete collection", func(t *testing.T) {
+		resetReq := &bindings.InvokeRequest{
+			Operation: reset,
+		}
+		resReset, errReset := b.Invoke(ctx, resetReq)
+		require.Nil(t, errReset)
+		require.NotNil(t, resReset)
+		createReq := &bindings.InvokeRequest{
+			Operation: createCollection,
+			Data: []byte(fmt.Sprintf(`{
+				"name": "%s",
+				"embeddingFunction": "openai",
+				"metadata": {
+					"type": "col"
+				},	
+				"distanceFunction": "l2"
+			}`, testCollection)),
+		}
+		resCreate, createErr := b.Invoke(ctx, createReq)
+		require.Nil(t, createErr)
+		require.NotNil(t, resCreate)
 		req := &bindings.InvokeRequest{
 			Operation: deleteCollection,
 			Data: []byte(fmt.Sprintf(`{
@@ -107,6 +154,26 @@ func TestChromaIntegration(t *testing.T) {
 		assertResponse(t, res, err)
 	})
 	t.Run("Invoke delete collection", func(t *testing.T) {
+		resetReq := &bindings.InvokeRequest{
+			Operation: reset,
+		}
+		resReset, errReset := b.Invoke(ctx, resetReq)
+		require.Nil(t, errReset)
+		require.NotNil(t, resReset)
+		createReq := &bindings.InvokeRequest{
+			Operation: createCollection,
+			Data: []byte(fmt.Sprintf(`{
+				"name": "%s",
+				"embeddingFunction": "openai",
+				"metadata": {
+					"type": "col"
+				},	
+				"distanceFunction": "l2"
+			}`, testCollection)),
+		}
+		resCreate, createErr := b.Invoke(ctx, createReq)
+		require.Nil(t, createErr)
+		require.NotNil(t, resCreate)
 		req := &bindings.InvokeRequest{
 			Operation: getCollection,
 			Data: []byte(fmt.Sprintf(`{
