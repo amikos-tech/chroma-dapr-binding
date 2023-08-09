@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/dapr/components-contrib/master/component-metadata-schema.json
+schemaVersion: v1
+type: bindings
+name: chroma
+version: v1
+status: alpha
+title: "Chroma"
+urls:
+  - title: Reference
+    url: https://github.com/amikos-tech/chroma-dapr-binding
+capabilities: [ ]
+binding:
+  output: true
+  input: false
+  operations:
+    - name: reset
+      description: "Resets chroma database"
+    - name: version
+      description: "Returns chroma API version"
+    - name: heartbeat
+      description: "Sends heartbeat to chroma server"
+    - name: createCollection
+      description: "Creates a new collection"
+    - name: deleteCollection
+      description: "Deletes a collection"
+    - name: getCollection
+      description: "Gets a collection"
+    - name: listCollections
+      description: "Lists all collections"
+metadata:
+  - name: url
+    required: true
+    description: |
+      The chroam server url
+    example: "http://localhost:8000"
+    type: string
+  - name: openAIApiKey
+    required: false
+    description: |
+      OpenAI API Key used for Open AI Embedding Function.
+    example: "sk-xxxxxxx"
+    sensitive: true
+    type: string
+  - name: cohereApiKey
+    required: false
+    description: |
+        Cohere API Key used for Cohere Embedding Function.
+    type: string
+    sensitive: true
+    example: "xxxxxx"
+  - name: huggingFaceApiKey
+    required: false
+    description: |
+        HuggingFace API Key used for HuggingFace Sentence Transformers Embedding Function.
+    type: string
+    sensitive: true
+    example: "xxxxxx"
+  - name: defaultEmbeddingFunction
+    required: false
+    description: |
+        Default Embedding Function to use when no function is specified.
+    type: string
+    example: "openai"
+    allowedValues:
+      - openai
+      - cohere
+      - sentenceTransformers
