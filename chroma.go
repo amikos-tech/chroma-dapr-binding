@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	chroma "github.com/amikos-tech/chroma-go"
-	openai "github.com/amikos-tech/chroma-go/openai"
+	"github.com/amikos-tech/chroma-go/openai"
 	"github.com/dapr/components-contrib/bindings"
+	"github.com/dapr/components-contrib/metadata"
 	"github.com/dapr/kit/logger"
 	"strconv"
 	"time"
@@ -24,20 +25,15 @@ const (
 	openAIEmbeddingFunction               string                 = "openai"
 	cohereEmbeddingFunction               string                 = "cohere"
 	sentenceTransformersEmbeddingFunction string                 = "sentenceTransformers"
-	urlProperty                           string                 = "url"
-	openAIApiKeyProperty                  string                 = "openAIApiKey"
-	cohereApiKeyProperty                  string                 = "cohereApiKey"
-	huggingFaceApiKeyProperty             string                 = "huggingFaceApiKey"
-	defaultEmbeddingFunctionProperty      string                 = "defaultEmbeddingFunction"
 )
 
 type chromaMetadata struct {
-	Url                      string
-	OperationTimeout         time.Duration
-	OpeAIAPIKey              string
-	CohereAPIKey             string
-	HuggingFaceAPIKey        string
-	DefaultEmbeddingFunction string // openai, cohere, sentenceTransformers
+	Url                      string        `mapstructure:"url"`
+	OperationTimeout         time.Duration `mapstructure:"operationTimeout"`
+	OpeAIAPIKey              string        `mapstructure:"openAIApiKey"`
+	CohereAPIKey             string        `mapstructure:"cohereApiKey"`
+	HuggingFaceAPIKey        string        `mapstructure:"huggingFaceApiKey"`
+	DefaultEmbeddingFunction string        `mapstructure:"defaultEmbeddingFunction"`
 }
 
 type ChromaBindingComponent struct {
@@ -54,13 +50,11 @@ func NewChroma(logger logger.Logger) bindings.OutputBinding {
 
 func (c *ChromaBindingComponent) Init(ctx context.Context, meta bindings.Metadata) (err error) {
 	// Called to initialize the component with its configured metadata...
-	c.meta = chromaMetadata{
-		Url:                      meta.Properties[urlProperty],
-		OpeAIAPIKey:              meta.Properties[openAIApiKeyProperty],
-		CohereAPIKey:             meta.Properties[cohereApiKeyProperty],
-		HuggingFaceAPIKey:        meta.Properties[huggingFaceApiKeyProperty],
-		DefaultEmbeddingFunction: meta.Properties[defaultEmbeddingFunctionProperty],
+	err = metadata.DecodeMetadata(meta, &c.meta)
+	if err != nil {
+		return err
 	}
+
 	if c.meta.Url == "" {
 		return errors.New("missing host field from metadata")
 	}

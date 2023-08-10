@@ -39,3 +39,5 @@ helm install chroma chroma/chromadb --set chromadb.allowReset=true,chromadb.apiV
 ## Installation
 
 ```bash
+go get github.com/amikos-tech/chroma-dapr-binding
+```
