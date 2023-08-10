@@ -12,7 +12,7 @@ This binding allows you to use Chroma Vector Database as an output binding in Da
 - ✅ Delete Collection
 - 🚫 Collection Add Embedding
 - ⚠️ Collection Get (partial without additional parameters)
-- 🚫 Collection Count
+- ✅ Collection Count
 - 🚫 Collection Query
 - 🚫 Collection Modify Embeddings
 - 🚫 Collection Update

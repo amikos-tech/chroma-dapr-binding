@@ -2,6 +2,7 @@ package chroma_dapr
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/dapr/components-contrib/bindings"
 	"github.com/dapr/components-contrib/metadata"
@@ -30,7 +31,7 @@ func TestOperations(t *testing.T) {
 		b := NewChroma(nil)
 		assert.NotNil(t, b)
 		l := b.Operations()
-		assert.Equal(t, 7, len(l))
+		assert.Equal(t, 8, len(l))
 	})
 }
 
@@ -73,7 +74,7 @@ func TestChromaIntegration(t *testing.T) {
 		assertResponse(t, res, err)
 	})
 
-	t.Run("Invoke list collections", func(t *testing.T) {
+	t.Run("Invoke listCollections", func(t *testing.T) {
 		resetReq := &bindings.InvokeRequest{
 			Operation: reset,
 		}
@@ -101,7 +102,7 @@ func TestChromaIntegration(t *testing.T) {
 		assertResponse(t, res, err)
 	})
 
-	t.Run("Invoke create collection", func(t *testing.T) {
+	t.Run("Invoke createCollection", func(t *testing.T) {
 		resetReq := &bindings.InvokeRequest{
 			Operation: reset,
 		}
@@ -123,7 +124,7 @@ func TestChromaIntegration(t *testing.T) {
 		assertResponse(t, res, err)
 	})
 
-	t.Run("Invoke delete collection", func(t *testing.T) {
+	t.Run("Invoke deleteCollection", func(t *testing.T) {
 		resetReq := &bindings.InvokeRequest{
 			Operation: reset,
 		}
@@ -153,7 +154,7 @@ func TestChromaIntegration(t *testing.T) {
 		res, err := b.Invoke(ctx, req)
 		assertResponse(t, res, err)
 	})
-	t.Run("Invoke delete collection", func(t *testing.T) {
+	t.Run("Invoke getCollection", func(t *testing.T) {
 		resetReq := &bindings.InvokeRequest{
 			Operation: reset,
 		}
@@ -182,6 +183,41 @@ func TestChromaIntegration(t *testing.T) {
 		}
 		res, err := b.Invoke(ctx, req)
 		assertResponse(t, res, err)
+	})
+
+	t.Run("Invoke collectionCount", func(t *testing.T) {
+		resetReq := &bindings.InvokeRequest{
+			Operation: reset,
+		}
+		resReset, errReset := b.Invoke(ctx, resetReq)
+		require.Nil(t, errReset)
+		require.NotNil(t, resReset)
+		createReq := &bindings.InvokeRequest{
+			Operation: createCollection,
+			Data: []byte(fmt.Sprintf(`{
+				"name": "%s",
+				"embeddingFunction": "openai",
+				"metadata": {
+					"type": "col"
+				},	
+				"distanceFunction": "l2"
+			}`, testCollection)),
+		}
+		resCreate, createErr := b.Invoke(ctx, createReq)
+		require.Nil(t, createErr)
+		require.NotNil(t, resCreate)
+		req := &bindings.InvokeRequest{
+			Operation: collectionCount,
+			Data: []byte(fmt.Sprintf(`{
+				"name": "%s"
+			}`, testCollection)),
+		}
+		res, err := b.Invoke(ctx, req)
+		assertResponse(t, res, err)
+		var count int
+		err = json.Unmarshal(res.Data, &count)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, count)
 	})
 
 }

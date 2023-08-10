@@ -22,6 +22,7 @@ const (
 	deleteCollection                      bindings.OperationKind = "deleteCollection"
 	listCollections                       bindings.OperationKind = "listCollections"
 	getCollection                         bindings.OperationKind = "getCollection"
+	collectionCount                       bindings.OperationKind = "collectionCount"
 	openAIEmbeddingFunction               string                 = "openai"
 	cohereEmbeddingFunction               string                 = "cohere"
 	sentenceTransformersEmbeddingFunction string                 = "sentenceTransformers"
@@ -257,6 +258,27 @@ func (c *ChromaBindingComponent) Invoke(ctx context.Context, req *bindings.Invok
 			return nil, err
 		}
 		resp.Data = d
+	case collectionCount:
+		var getCollectionReq struct {
+			Name string `json:"name"`
+		}
+		err := json.Unmarshal(req.Data, &getCollectionReq)
+		if err != nil {
+			return nil, err
+		}
+		collection, err := c.client.GetCollection(getCollectionReq.Name, nil)
+		if err != nil {
+			return nil, err
+		}
+		count, err := collection.Count()
+		if err != nil {
+			return nil, err
+		}
+		d, err := json.Marshal(count)
+		if err != nil {
+			return nil, err
+		}
+		resp.Data = d
 	default:
 		return nil, fmt.Errorf(
 			"invalid operation type: %s. Expected %v",
@@ -279,5 +301,6 @@ func (c *ChromaBindingComponent) Operations() []bindings.OperationKind {
 		deleteCollection,
 		listCollections,
 		getCollection,
+		collectionCount,
 	}
 }

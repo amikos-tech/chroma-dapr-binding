@@ -27,6 +27,8 @@ binding:
       description: "Gets a collection"
     - name: listCollections
       description: "Lists all collections"
+    - name: collectionCount
+      description: "Gets the number of documents in a collection"
 metadata:
   - name: url
     required: true
